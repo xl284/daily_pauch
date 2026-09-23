@@ -193,8 +193,15 @@ class _StatsCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             const SizedBox(height: 4),
-            Text('打卡率 ${(stats.rate * 100).toStringAsFixed(1)}%',
-                style: Theme.of(context).textTheme.bodySmall),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('打卡率 ${(stats.rate * 100).toStringAsFixed(1)}%',
+                    style: Theme.of(context).textTheme.bodySmall),
+                Text('历史最长连续 ${stats.longestStreak} 天',
+                    style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
           ],
         ),
       ),
@@ -296,13 +303,13 @@ class _HeatmapCalendarState extends ConsumerState<_HeatmapCalendar> {
     final today = DateTime(now.year, now.month, now.day);
     final earliest = today.subtract(const Duration(days: _makeUpWindowDays));
 
-    if (selected.isAfter(today)) {
+    if (key.isAfter(today)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('不能给未来日期打卡')),
       );
       return;
     }
-    if (selected.isBefore(earliest)) {
+    if (key.isBefore(earliest)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('只能补打卡 $_makeUpWindowDays 天内的记录')),
       );

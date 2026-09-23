@@ -69,36 +69,79 @@ class ScheduleEngine {
   ) {
     int streak = 0;
     var d = DateTime(today.year, today.month, today.day);
-    final start = DateTime(task.startDate.year, task.startDate.month, task.startDate.day);
-    // 安全上限：最多回溯 3650 天（10 年），同时不能早于 startDate 前一年
-    final earliest = start.subtract(const Duration(days: 365));
     final todayKey = DateTime(today.year, today.month, today.day);
+    // 安全上限：最多回溯 3650 天（10 年）
     int guard = 0;
     while (guard++ < 3650) {
-      if (!isTaskActiveOn(task, d)) {
-        d = d.subtract(const Duration(days: 1));
-        if (d.isBefore(earliest)) break;
-        continue;
-      }
       final key = DateTime(d.year, d.month, d.day);
-      if (doneDates.contains(key)) {
+      final hasCheckIn = doneDates.contains(key);
+      final hasSkip = skippedDates.contains(key);
+      final isActive = isTaskActiveOn(task, d);
+
+      if (hasCheckIn) {
+        // 有打卡 → 连续 +1（即使是非活跃日/startDate 之前的补打卡也算）
         streak++;
         d = d.subtract(const Duration(days: 1));
         continue;
       }
-      if (skippedDates.contains(key)) {
+      if (!isActive) {
+        // 非活跃日且没打卡 → 跳过，不断签（如 weekly 任务的非打卡日、startDate 之前的日子）
         d = d.subtract(const Duration(days: 1));
         continue;
       }
-      // 今天还没打卡不算断签，跳过今天继续往前数
+      if (hasSkip) {
+        // 活跃日 + 跳过 → 跳过，不断签
+        d = d.subtract(const Duration(days: 1));
+        continue;
+      }
+      // 活跃日 + 没打卡 + 没跳过
       if (key == todayKey) {
+        // 今天还没打卡不算断签，跳过今天继续往前数
         d = d.subtract(const Duration(days: 1));
         continue;
       }
-      // 过去的应打卡日没做 → 连续中断
+      // 过去的活跃日没做 → 连续中断
       break;
     }
     return streak;
+  }
+
+  /// 历史最长连续打卡天数（从 startDate 正向遍历到 today，取连续区间的最大值）。
+  ///
+  /// 连续判定规则与 [currentStreak] 一致：
+  /// - 有打卡 → 当前连续 +1
+  /// - 非活跃日且没打卡 → 跳过，不中断（如 weekly 的非打卡日）
+  /// - 活跃日 + 跳过 → 跳过，不中断
+  /// - 活跃日 + 没打卡 + 没跳过 + 不是今天 → 连续中断
+  static int longestStreak(
+    Task task,
+    DateTime today,
+    Set<DateTime> doneDates,
+    Set<DateTime> skippedDates,
+  ) {
+    final start = DateTime(task.startDate.year, task.startDate.month, task.startDate.day);
+    final todayKey = DateTime(today.year, today.month, today.day);
+    int maxStreak = 0;
+    int current = 0;
+    var d = start;
+    while (!d.isAfter(todayKey)) {
+      final key = DateTime(d.year, d.month, d.day);
+      final hasCheckIn = doneDates.contains(key);
+      final hasSkip = skippedDates.contains(key);
+      final isActive = isTaskActiveOn(task, d);
+
+      if (hasCheckIn) {
+        current++;
+        if (current > maxStreak) maxStreak = current;
+      } else if (!isActive || hasSkip || key == todayKey) {
+        // 非活跃日 / 跳过 / 今天还没打卡 → 不中断，保持当前连续计数
+      } else {
+        // 活跃日 + 没打卡 + 没跳过 → 连续中断
+        current = 0;
+      }
+      d = d.add(const Duration(days: 1));
+    }
+    return maxStreak;
   }
 
   static int _lastDayOfMonth(DateTime date) {

@@ -4,6 +4,7 @@ class TaskStats {
   final int skipped;
   final double rate;
   final int streak;
+  final int longestStreak;
 
   const TaskStats({
     required this.due,
@@ -11,6 +12,7 @@ class TaskStats {
     required this.skipped,
     required this.rate,
     required this.streak,
+    required this.longestStreak,
   });
 
   int get effectiveDue => due - skipped;
@@ -21,5 +23,6 @@ class TaskStats {
     skipped: 0,
     rate: 1.0,
     streak: 0,
+    longestStreak: 0,
   );
 }

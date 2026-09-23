@@ -46,6 +46,8 @@ final taskStatsProvider = FutureProvider.family<TaskStats, int>((ref, taskId) as
       .toSet();
 
   final streak = ScheduleEngine.currentStreak(task, today, doneDates, skippedDates);
+  final longestStreak =
+      ScheduleEngine.longestStreak(task, today, doneDates, skippedDates);
 
   final effectiveDue = due - skipped;
   final rate = effectiveDue == 0 ? 1.0 : (done / effectiveDue).clamp(0.0, 1.0);
@@ -56,6 +58,7 @@ final taskStatsProvider = FutureProvider.family<TaskStats, int>((ref, taskId) as
     skipped: skipped,
     rate: rate,
     streak: streak,
+    longestStreak: longestStreak,
   );
 });
 
