@@ -38,8 +38,9 @@ flutter build apk --release --no-tree-shake-icons --target-platform android-arm6
 
 如果 `sqlite3` 包下载 `.so` 失败（GitHub 连接超时），设置代理后重试：
 ```powershell
-$env:HTTP_PROXY = "http://127.0.0.1:7890"
-$env:HTTPS_PROXY = "http://127.0.0.1:7890"
+# 替换成你实际的代理地址和端口
+$env:HTTP_PROXY = "http://127.0.0.1:<你的代理端口>"
+$env:HTTPS_PROXY = "http://127.0.0.1:<你的代理端口>"
 flutter build apk --release --no-tree-shake-icons --target-platform android-arm64
 ```
 
