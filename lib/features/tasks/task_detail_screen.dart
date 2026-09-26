@@ -309,18 +309,19 @@ class _HeatmapCalendarState extends ConsumerState<_HeatmapCalendar> {
       );
       return;
     }
-    if (key.isBefore(earliest)) {
+
+    final count = _counts[key] ?? 0;
+    if (count > 0) {
+      // 有打卡记录，直接查看（不受 7 天限制）
+      await _showCheckInsDialog(key);
+    } else if (key.isBefore(earliest)) {
+      // 无打卡记录且超出补打卡窗口
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('只能补打卡 $_makeUpWindowDays 天内的记录')),
       );
-      return;
-    }
-
-    final count = _counts[key] ?? 0;
-    if (count == 0) {
-      await _showMakeUpDialog(key);
     } else {
-      await _showCheckInsDialog(key);
+      // 无打卡记录且在补打卡窗口内
+      await _showMakeUpDialog(key);
     }
   }
 
